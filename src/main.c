@@ -1,12 +1,23 @@
-#include <assert.h>
-#include "raylib/raylib.h"
-#include "core/loader.h"
-#include "core/render.h"
-#include "core/timeline.h"
-#include "utils/config.h"
+#include "./core/loader.h"
+#include "./core/render.h"
+#include "./core/timeline.h"
 
+#include "config.h"
 #define ALTARR_IMPLEMENTATION
-#include "utils/altarr.h"
+#include "altarr.h"
+
+#include "raylib/raylib.h"
+
+static union { double inverse_fps; double offset; } render_timing = {0.0};
+
+static inline double getPreviewTime() {
+    return GetTime() - render_timing.offset;
+}
+static double getRenderTime() {
+    static size_t i = 0;
+    i += 1;
+    return i * render_timing.inverse_fps;
+}
 
 void drawError(const char* error)
 {
@@ -24,7 +35,7 @@ void drawError(const char* error)
 
 bool init(CanimArgs *args, CanimTimeline **timeline, CanimRender **renderer)
 {
-    unsigned width, height, fps;
+    unsigned width, height, fps, samples;
     *timeline = canimTimelineCreate(PAGINATION_SECONDS);
 
     TraceLog(LOG_INFO, "Opening file: %s", args->path);
@@ -32,7 +43,20 @@ bool init(CanimArgs *args, CanimTimeline **timeline, CanimRender **renderer)
         return drawError("Animation file is invalid (press any key to quit)"), false;
 
     MaximizeWindow();
-    *renderer = canimRenderStart(width, height, fps, args->render);
+    if(args->render) {
+        render_timing.inverse_fps = 1.0 / (double)fps;
+        SetTargetFPS(0);
+    }
+    else {
+        render_timing.offset = GetTime();
+        SetTargetFPS(fps);
+    }
+
+    canimRenderInit();
+
+    printf("Parsed args: %s, %d\n", args->path, args->render);
+    samples = 8;
+    *renderer = canimRenderStart(width, height, fps, samples, args->render);
     return true;
 }
 
@@ -46,7 +70,7 @@ void deinit(CanimTimeline* timeline, CanimRender *renderer)
 int main(int argc, char** argv)
 {
     //SetTraceLogLevel(LOG_WARNING);
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
     InitWindow(1280, 720, "Canim");
 
     CanimArgs parsed_args = {0};
@@ -62,19 +86,28 @@ int main(int argc, char** argv)
 
     while (!WindowShouldClose())
     {
-        BeginDrawing();
         canimRenderBeginOutput(rend);
         ClearBackground(BLACK);
 
-        if(!canimTimelineIterate(timeline, GetTime()))
+        if(!canimTimelineIterate(timeline, parsed_args.render ? getRenderTime() : getPreviewTime()))
             break;
 
         canimRenderEndOutput(rend);
 
-        canimRenderDraw(rend, 0, 0, GetScreenWidth(), GetScreenHeight());
-        //DrawFPS(0, 0);
-        DrawText(TextFormat("Total Time: %f", GetTime()), 0, 0, 24, WHITE);
-        EndDrawing();
+        if(!parsed_args.render) {
+            BeginDrawing();
+            ClearBackground(BLACK);
+            canimRenderDraw(rend, 0, 0, GetScreenWidth(), GetScreenHeight());
+            DrawText(TextFormat("Total Time: %f, started with %f", getPreviewTime(), GetTime()), 0, 30, 24, WHITE);
+            DrawFPS(0, 0);
+            EndDrawing();
+        } else {
+            const Vector2 text_size = {(GetScreenWidth() - MeasureText("Rendering", 48)) / 2., GetScreenHeight() / 2.};
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawText("Rendering...", text_size.x, text_size.y, 48, WHITE);
+            EndDrawing();
+        }
 
         canimRenderSendFrame(rend);
     }

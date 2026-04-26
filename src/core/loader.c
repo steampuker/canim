@@ -1,15 +1,16 @@
+#include "./loader.h"
+#include "./timeline.h"
+
+#include "config.h"
+#define PARG_IMPLEMENTATION
+#include "parg.h"
+
+#include "canim.h"
+
 #include <stdio.h>
 #include <dlfcn.h>
 #include <unistd.h>
 #include <string.h>
-
-#include "core/loader.h"
-#include "core/timeline.h"
-#include "utils/config.h"
-#define PARG_IMPLEMENTATION
-#include "utils/parg.h"
-
-#include "canim.h"
 
 static struct  {
     CanimTimeline *timeline;
@@ -69,6 +70,7 @@ void canimUnload(void)
 void canimLoaderParseArgs(int argc, char** argv, CanimArgs *result)
 {
     if(!result) return;
+
     result->render = false;
 
     int longindex, c;
@@ -96,8 +98,9 @@ unsigned canimGetRenderFPS(void)    { return loader_state.fps; }
 
 void canimSetRenderWidth(double width)   { loader_state.width = width; }
 void canimSetRenderHeight(double height) { loader_state.height = height; }
-void canimSetRenderFPS(double fps)    { loader_state.fps = fps; }
+void canimSetRenderFPS(double fps)       { loader_state.fps = fps; }
 
-void canimAddAnimation(double start, double end, void(*callback)(double, double)) { canimTimelineAddEntry(loader_state.timeline, start, end, callback); }
+void canimAddAnimation(double start, double end, void(*callback)(double, double)) { canimTimelineAddEntry(loader_state.timeline, start, end, callback, 0, 0); }
+void canimAddAnimationManaged(double start, double end, void (*callback)(double progress, double actual), void (*init)(void), void (*deinit)(void)) { canimTimelineAddEntry(loader_state.timeline, start, end, callback, init, deinit); }
 void canimSetTotalLength(double seconds) { canimTimelineSetLength(loader_state.timeline, seconds); }
 double canimGetTotalLength(void) { return canimTimelineGetLength(loader_state.timeline); }

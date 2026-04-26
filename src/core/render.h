@@ -6,7 +6,8 @@
 
 typedef struct CanimRender CanimRender;
 
-CanimRender* canimRenderStart(unsigned width, unsigned height, unsigned fps, bool output);
+void canimRenderInit(void);
+CanimRender* canimRenderStart(unsigned width, unsigned height, unsigned fps, unsigned samples, bool output);
 
 void canimRenderFinish(CanimRender* context);
 void canimRenderSendFrame(CanimRender* context);

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "include/builder/nob.h"
-#include "include/utils/parg.h"
+#include "include/parg.h"
 
 #define PRINT_ERR(x) fprintf(stderr, "[" "\033[1;31m" "ERROR" "\033[0m" "] " "\033[1;31m" x "\033[0m" "\n")
 #define PRINT_WARN(x) fprintf(stderr, "[" "\x1B[33m" "WARNING" "\x1B[0m" "]: " x "\n")
@@ -20,7 +20,7 @@
 #define CANIM_HEADERS_PATH "include/"
 
 enum Target {TARGET_DEBUG, TARGET_DEBUG_SAN, TARGET_RELEASE, TARGET_RELEASE_NATIVE};
-enum Target parseTargetOption(int argc, char **argv);
+enum Target parseTargetOptions(int argc, char **argv);
 void addIncludeFlags(Cmd *cmd, bool output_cmd);
 void addSourceFiles(Cmd *cmd);
 void addLinkFlags(Cmd *cmd);
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    enum Target target = parseTargetOption(argc, argv);
+    enum Target target = parseTargetOptions(argc, argv);
 
     cmd_append(&cmd, "gcc");
     addIncludeFlags(&cmd, true);
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 
 static String_Builder output_commands;
 
-enum Target parseTargetOption(int argc, char **argv)
+enum Target parseTargetOptions(int argc, char **argv)
 {
     struct parg_state parg = {0};
     const struct parg_option opts[] = {
@@ -160,6 +160,8 @@ void addSourceFiles(Cmd *cmd)
 {
     Nob_File_Paths paths = {0};
     parseDirectory("src", &paths);
+    parseDirectory("src/core", &paths);
+    parseDirectory("src/extra", &paths);
 
     for(int i = 0; i < paths.count; ++i) {
         if(!sv_end_with(sv_from_cstr(paths.items[i]), ".c"))
@@ -167,11 +169,13 @@ void addSourceFiles(Cmd *cmd)
 
         cmd_append(cmd, paths.items[i]);
     }
+
+    da_free(paths);
 }
 
 void addLinkFlags(Cmd *cmd)
 {
-    cmd_append(cmd, "lib/libraylib.a", "-lm", "-ldl", "-rdynamic");
+    cmd_append(cmd, "lib/libraylib.a", "-lm", "-ldl", "-rdynamic", "-l:libX11.so.6");
 }
 
 void addTargetFlags(Cmd *cmd, enum Target target)

@@ -1,3 +1,8 @@
+#include "./render.h"
+#include "../extra/rl_rendertexture_msaa.h"
+
+#include "raylib/raylib.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,15 +13,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "core/render.h"
-#include "raylib/raylib.h"
-
 struct CanimRender {
-    RenderTexture buffer;
+    RenderTextureMSAA buffer;
 
     pid_t pid;
     int pipe;
     unsigned width, height, fps;
+
+    uint32_t* send_data;
 };
 
 static inline bool initializeFFMPEG(int pipefd[2], pid_t forked[], unsigned width, unsigned height, unsigned fps)
@@ -83,9 +87,16 @@ static inline bool initializeFFMPEG(int pipefd[2], pid_t forked[], unsigned widt
     return true;
 }
 
-CanimRender* canimRenderStart(unsigned width, unsigned height, unsigned fps, bool output)
+void canimRenderInit(void)
 {
-    CanimRender* renderer = malloc(sizeof *renderer);
+    InitMSAAInjector();
+}
+
+CanimRender* canimRenderStart(unsigned width, unsigned height, unsigned fps, unsigned samples, bool output)
+{
+    fprintf(stderr, "[INFO] Output is: %d, %d, %d\n", width, height, fps);
+
+    CanimRender* renderer = MemAlloc(sizeof *renderer);
     if(!renderer) {
         fprintf(stderr, "[ERROR] Couldn't allocate a memory for the renderer\n");
         return 0;
@@ -94,11 +105,13 @@ CanimRender* canimRenderStart(unsigned width, unsigned height, unsigned fps, boo
     int pipefd[2];
     pid_t forked = -1;
 
-    if(output)
-        if(!initializeFFMPEG(pipefd, &forked, width, height, fps)) {
+    if(output) {
+        bool ffmpeg_initialized = initializeFFMPEG(pipefd, &forked, width, height, fps);
+        if(!ffmpeg_initialized) {
             free(renderer);
             return 0;
         }
+    }
 
     renderer->pid = forked;
     renderer->pipe = pipefd[1];
@@ -106,7 +119,10 @@ CanimRender* canimRenderStart(unsigned width, unsigned height, unsigned fps, boo
     renderer->height = height;
     renderer->fps = fps;
 
-    renderer->buffer = LoadRenderTexture(width, height);
+    renderer->buffer = LoadRenderTextureMSAA(width, height, samples);
+    renderer->send_data = MemAlloc(GetPixelDataSize(width, height, renderer->buffer.blit.format));
+
+    SetTextureFilter(renderer->buffer.blit, TEXTURE_FILTER_BILINEAR);
 
     return renderer;
 }
@@ -136,8 +152,9 @@ void canimRenderFinish(CanimRender* renderer)
         waitpid(renderer->pid, NULL, 0);
     }
 
-    UnloadRenderTexture(renderer->buffer);
-    free(renderer);
+    UnloadRenderTextureMSAA(renderer->buffer);
+    MemFree(renderer->send_data);
+    MemFree(renderer);
 }
 
 static inline void sendFrame(CanimRender* renderer, uint32_t* data)
@@ -154,26 +171,29 @@ static inline void sendFlippedFrame(CanimRender* renderer, uint32_t* data)
 void canimRenderSendFrame(CanimRender* renderer)
 {
     if(!renderer || !canimIsRendering(renderer)) return;
-    Image image = LoadImageFromTexture(renderer->buffer.texture);
-    sendFlippedFrame(renderer, (uint32_t*)image.data);
-    UnloadImage(image);
+    //Image image = LoadImageFromTexture(renderer->buffer.texture);
+    ExportDataTexture2D(renderer->buffer.blit, renderer->send_data);
+    sendFlippedFrame(renderer, renderer->send_data);
+    //UnloadImage(image);
 }
 
 void canimRenderBeginOutput(CanimRender* renderer)
 {
     if(!renderer) return;
-    BeginTextureMode(renderer->buffer);
+    BeginTextureMode(renderer->buffer.render);
 }
 
 void canimRenderEndOutput(CanimRender* renderer)
 {
     if(!renderer) return;
     EndTextureMode();
+    DownsampleRenderTextureMSAA(renderer->buffer);
 }
 
 void canimRenderDraw(CanimRender *renderer, int x, int y, int width, int height) {
     if(!renderer) return;
-    DrawTexturePro(renderer->buffer.texture,
+
+    DrawTexturePro(renderer->buffer.blit,
                   (Rectangle){0, 0, (float)renderer->width, -(float)renderer->height},
                   (Rectangle){x, y, width, height},
                   (Vector2){0}, 0, WHITE);

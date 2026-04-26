@@ -54,18 +54,18 @@ void iAltarrDiagBounds(struct ialtarr_handle* handle, const char* handle_name, i
 #define altarrDestroy(arr) iAltarrDestroy(&arr.handle)
 
 #define altarrValid(arr) (!!arr.handle.data)
-#define altarrRaw(arr) ((typeof(arr.type_))arr.handle.data)
-#define altarrLength(arr) (const ialtarr_size)((void)0, arr.handle.length)
+#define altarrRaw(arr) ((typeof((arr).type_))(arr).handle.data)
+#define altarrLength(arr) (const ialtarr_size)((void)0, (arr).handle.length)
 #define altarrCapacity(arr) (const ialtarr_size)((void)0, arr.handle.capacity)
-#define altarrElemSize(arr) sizeof(arr.size_[0])
+#define altarrElemSize(arr) sizeof((arr).size_[0])
 
 #define altarrAt(arr, index) M_ALTARR_CHECKED(iAltarrDiagBounds(&arr.handle, M_ALTARR_STRINGIFY(arr), index, __FILE__, __LINE__, __func__)) \
                              (altarrRaw(arr))[index]
 
-#define altarrPush(arr, element) (iAltarrGrowMaybe(&arr.handle, arr.handle.length + 1, altarrElemSize(arr)) ? \
-                                 (void)(altarrRaw(arr)[arr.handle.length++] = element) : \
+#define altarrPush(arr, element) (iAltarrGrowMaybe(&(arr).handle, (arr).handle.length + 1, altarrElemSize(arr)) ? \
+                                 (void)(altarrRaw(arr)[(arr).handle.length++] = element) : \
                                  (void)0)
-#define altarrInsert(arr, at, element) (iAltarrShiftRight(&arr.handle, at, 1, altarrElemSize(arr)) ? \
+#define altarrInsert(arr, at, element) (iAltarrShiftRight(&(arr).handle, at, 1, altarrElemSize(arr)) ? \
                                         (void)(altarrRaw(arr)[at] = element) : \
                                         (void)0)
 #define altarrRemove(arr, at) iAltarrShiftLeft(&arr.handle, at, 1, altarrElemSize(arr))

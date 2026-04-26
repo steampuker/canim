@@ -4,6 +4,7 @@
 void canimSetup(void);
 
 void canimAddAnimation(double start, double end, void (*callback)(double progress, double actual));
+void canimAddAnimationManaged(double start, double end, void (*callback)(double progress, double actual), void (*init)(void), void (*deinit)(void));
 void canimSetTotalLength(double seconds);
 double canimGetTotalLength(void);
 
