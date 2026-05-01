@@ -26,16 +26,19 @@ static struct  {
 static inline void* openLibrary(const char* path)
 {
     if(path[0] == '/' || path[0] == '.')
-        return dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+        return dlopen(path, RTLD_LAZY | RTLD_LOCAL);
 
-    char current_path[1024];
-    if(getcwd(current_path, 1024) != current_path) return false;
+    size_t length = strlen(path) + 1;
 
-    unsigned path_len = strlen(current_path);
-    current_path[path_len] = '/';
-    current_path[path_len + 1] = '\0';
+    char *temp_string = malloc((length + 2) * sizeof(char));
+    temp_string[0] = '.';
+    temp_string[1] = '/';
+    memcpy(temp_string + 2, path, length);
 
-    return dlopen(strcat(current_path, path), RTLD_LAZY | RTLD_LOCAL);
+    void *handle = dlopen(temp_string, RTLD_LAZY | RTLD_LOCAL);
+    free(temp_string);
+
+    return handle;
 }
 
 bool canimLoad(const char* path, CanimTimeline *timeline, unsigned *width, unsigned *height, unsigned *fps)
