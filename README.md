@@ -6,16 +6,18 @@ In its essence, it's very similar to panim, except it can do multiple independen
 # Getting Started
 
 Like panim, canim uses nob as its build system. You'll need to compile nob.c like:
+
 ```
 gcc nob.c -o nob
 ```
 
 And then you can execute it to build the project. Use `./nob --help` to get more info.
 
-Afterwards, you will have the bin directory created that will contain the canim executable.
-The executable is used to run the projects you will compile as shared libraries.
+Afterwards, you will have the bin directory created that will contain the canim executable. This executable will load projects you will compile as shared libraries.
 
 To render the project, you can pass the --render option to the canim executable. As of now, it will create an `output.mp4` encoded using H.264.
+
+There is also `extras/example.c` with an example of how the animation code should be structured. The file should be copied to the `bin` folder.
 
 # Dependencies
 
@@ -23,13 +25,16 @@ As of now, you can build canim only on Linux, and it will require the following 
 
 - An X11 environment, XWayland will probably work as well, as long as Xlib can be loaded.
 - raylib 6.0 release from its repository. nob will search for the libraries in the `lib` directory.
-- ffmpeg command available in your path to render videos.
+- ffmpeg command available in your PATH to render videos.
 
 # Usage
 
 You will likely create your project in the bin directory, as it will also copy the necessary headers.
 Every project is compiled roughly like so:
-`gcc foo.c -o foo.so -shared -fPIC`
+
+```
+gcc foo.c -o foo.so -shared -fPIC
+```
 
 And then you can pass foo.so as the argument for canim to load it.
 
@@ -40,7 +45,7 @@ To add your animations, call `canimAddAnimation`. Every animation is assumed to 
 
 You can also use the `canimAddAnimationManaged` version to load and unload custom data.
 
-There is also `extras` in the source directory that contain additional modules that might be useful for creating animations.
+In the `extras` folder there are additional modules that might be useful for creating animations.
 
 # Feedback and Limitations
 
