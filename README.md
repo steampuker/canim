@@ -7,7 +7,7 @@ In its essence, it's very similar to [panim](https://github.com/tsoding/panim), 
 
 Like panim, canim uses nob as its build system. You'll need to compile nob.c like:
 
-```
+```sh
 gcc nob.c -o nob
 ```
 
@@ -17,23 +17,11 @@ On the first run, it will create the `lib` folder and will ask you to download r
 Afterwards, you will have the bin directory created that will contain the canim executable. This executable will load projects you will compile as shared libraries.
 To render the project, you can pass the --render option to the canim executable. As of now, it will create an `output.mp4` encoded using H.264.
 
-There is also `extras/example.c` with an example of how the animation code should be structured. The file should be copied to the `bin` folder.
-
-# Dependencies
-
-As of now, you can build canim only on Linux, and it will require the following dependencies:
-
-- An X11 environment, XWayland will probably work as well, as long as Xlib can be loaded.
-- raylib 6.0 release from its repository. nob will search for the libraries in the `lib` directory.
-- ffmpeg command available in your PATH to render videos.
-
-# Usage
-
 You will likely create your project in the bin directory, as it will also copy the necessary headers.
 Every project is compiled roughly like so:
 
-```
-gcc foo.c -o foo.so -shared -fPIC
+```sh
+gcc foo.c -o foo.so -shared -fPIC # Compile your project as a shared object.
 ```
 
 And then you can pass foo.so as the argument for canim to load it.
@@ -45,7 +33,15 @@ To add your animations, call `canimAddAnimation`. Every animation is assumed to 
 
 You can also use the `canimAddAnimationManaged` version to load and unload custom data.
 
-In the `extras` folder there are additional modules that might be useful for creating animations.
+In the `extras` folder there are additional modules that might be useful for creating animations. There is also `extras/example.c` with an example of how the animation code should be structured. All of the files in the `extras` should be copied to your project directory.
+
+# Dependencies
+
+As of now, you can build canim only on Linux, and it will require the following dependencies:
+
+- An X11 environment, XWayland will probably work as well, as long as Xlib can be loaded.
+- raylib 6.0 release from its repository. nob will search for the libraries in the `lib` directory.
+- ffmpeg command available in your PATH to render videos.
 
 # Feedback and Limitations
 
@@ -63,10 +59,10 @@ All feedback is appreciated!
 
 # Credits
 
-[panim](https://github.com/tsoding/panim) and [nob](https://github.com/tsoding/nob.h) by tsoding,
-[raylib](https://github.com/raysan5/raylib) by raysan5,
-[parg](https://github.com/jibsen/parg) by Jørgen Ibsen,
-[ffmpeg](https://ffmpeg.org/).
+- [panim](https://github.com/tsoding/panim) and [nob](https://github.com/tsoding/nob.h) by tsoding,
+- [raylib](https://github.com/raysan5/raylib) by raysan5,
+- [parg](https://github.com/jibsen/parg) by Jørgen Ibsen,
+- [ffmpeg](https://ffmpeg.org/).
 
 # License
 
