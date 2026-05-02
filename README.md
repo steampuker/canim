@@ -1,7 +1,7 @@
 # canim - Create animations using C
 
 canim is a framework for creating animated graphics using raylib's API.
-In its essence, it's very similar to panim, except it can do multiple independent animations, even at once.
+In its essence, it's very similar to [panim](https://github.com/tsoding/panim), except it can do multiple independent animations, even at once.
 
 # Getting Started
 
@@ -12,9 +12,9 @@ gcc nob.c -o nob
 ```
 
 And then you can execute it to build the project. Use `./nob --help` to get more info.
+On the first run, it will create the `lib` folder and will ask you to download raylib libraries from [here](https://github.com/raysan5/raylib/releases).
 
 Afterwards, you will have the bin directory created that will contain the canim executable. This executable will load projects you will compile as shared libraries.
-
 To render the project, you can pass the --render option to the canim executable. As of now, it will create an `output.mp4` encoded using H.264.
 
 There is also `extras/example.c` with an example of how the animation code should be structured. The file should be copied to the `bin` folder.
@@ -59,7 +59,14 @@ In the future, there's also a plan to:
 - Direct ffmpeg integration, as opposed to creating a pipe.
 - More OS support.
 
-All feedback is appreciated
+All feedback is appreciated!
+
+# Credits
+
+[panim](https://github.com/tsoding/panim) and [nob](https://github.com/tsoding/nob.h) by tsoding,
+[raylib](https://github.com/raysan5/raylib) by raysan5,
+[parg](https://github.com/jibsen/parg) by Jørgen Ibsen,
+[ffmpeg](https://ffmpeg.org/).
 
 # License
 

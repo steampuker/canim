@@ -19,7 +19,7 @@
 
 #define CANIM_HEADERS_PATH "include/"
 
-enum Target {TARGET_DEBUG, TARGET_DEBUG_SAN, TARGET_RELEASE, TARGET_RELEASE_NATIVE};
+enum Target {TARGET_DEBUG, TARGET_DEBUG_SAN, TARGET_RELEASE, TARGET_RELEASE_NATIVE, TARGET_NONE};
 enum Target parseTargetOptions(int argc, char **argv);
 void addIncludeFlags(Cmd *cmd, bool output_cmd);
 void addSourceFiles(Cmd *cmd);
@@ -32,6 +32,13 @@ int main(int argc, char **argv)
     NOB_GO_REBUILD_URSELF(argc, argv);
 
     Cmd cmd = {0};
+
+    if(!nob_file_exists("lib")) {
+        mkdir_if_not_exists("lib");
+        PRINT_WARN("lib directory is not present, creating one. The build process will be stopped.\n"
+        "Make sure to download raylib libraries https://github.com/raysan5/raylib/releases/tag/6.0 or compile from scratch and put them in this directory");
+        return 0;
+    }
 
     if(!mkdir_if_not_exists("bin") || !mkdir_if_not_exists("bin/include")) {
         PRINT_ERR("Couldn't create an output directory");
@@ -50,7 +57,7 @@ int main(int argc, char **argv)
     cmd_append(&cmd, "-o", "bin/canim");
     cmd_run(&cmd, 0);
 
-    if(needs_rebuild(CANIM_HEADERS_PATH "canim.h", (const char*[]){"bin/include/canim.h", CANIM_HEADERS_PATH "raylib"}, 2)) {
+    if(!nob_file_exists("bin/include/canim.h") || needs_rebuild(CANIM_HEADERS_PATH "canim.h", (const char*[]){"bin/include/canim.h", CANIM_HEADERS_PATH "raylib"}, 2)) {
         copy_file(CANIM_HEADERS_PATH "canim.h", "bin/include/canim.h");
         copy_directory_recursively(CANIM_HEADERS_PATH "raylib", "bin/include/raylib");
     }
@@ -119,9 +126,10 @@ enum Target parseTargetOptions(int argc, char **argv)
 PARSE_ERROR:
     PRINT_WARN("No -t argument specified, defaulting to debug.");
     PRINT_NOTE(COLOR_BLUE "See -h/--help for usage" COLOR_RESET);
-	return false;
+	return TARGET_NONE;
 FATAL_ERROR:
     exit(0);
+    return TARGET_NONE;
 }
 
 void parseDirectory(const char* dir_name, Nob_File_Paths ret[static 1])
@@ -185,6 +193,7 @@ void addTargetFlags(Cmd *cmd, enum Target target)
         case TARGET_DEBUG: cmd_append(cmd, "-g", "-O0"); break;
         case TARGET_RELEASE: cmd_append(cmd, "-s", "-O2"); break;
         case TARGET_RELEASE_NATIVE: cmd_append(cmd, "-s", "-O3", "-march=native"); break;
+        case TARGET_NONE: break;
     }
 }
 
