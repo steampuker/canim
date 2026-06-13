@@ -8,9 +8,9 @@ In its essence, it's very similar to [panim](https://github.com/tsoding/panim), 
 canim uses Premake5 to build itself, make sure to [download it](https://premake.github.io/download). Here's an example with GNU Make:
 
 ```
-    cd canim
-    premake5 gmake
-    make
+cd canim
+premake5 gmake
+make
 ```
 
 It will create a `bin/debug/` folder containing the canim binary and include files.
@@ -59,7 +59,6 @@ All feedback is appreciated!
 canim is mostly licensed under LGPLv3, see the LICENSE for details. Some of the files may be used under a different license, they will have a comment.
 
 <details><summary>The AI policy of this sofware.</summary>
-
 The following actions are prohibited for this project:
 
 - Contributions of AI-generated content, including code, documentation, and multimedia.
