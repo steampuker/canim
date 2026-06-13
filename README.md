@@ -5,19 +5,19 @@ In its essence, it's very similar to [panim](https://github.com/tsoding/panim), 
 
 # Getting Started
 
-Like panim, canim uses nob as its build system. You'll need to compile nob.c like:
+canim uses Premake5 to build itself, make sure to [download it](https://premake.github.io/download). Here's an example with GNU Make:
 
-```sh
-gcc nob.c -o nob
+```
+    cd canim
+    premake5 gmake
+    make
 ```
 
-And then you can execute it to build the project. Use `./nob --help` to get more info.
-On the first run, it will create the `lib` folder and will ask you to download raylib libraries from [here](https://github.com/raysan5/raylib/releases).
+It will create a `bin/debug/` folder containing the canim binary and include files.
 
-Afterwards, you will have the bin directory created that will contain the canim executable. This executable will load projects you will compile as shared libraries.
-To render the project, you can pass the --render option to the canim executable. As of now, it will create an `output.mp4` encoded using H.264.
+canim will load an `.so` file you provide in the command-line argument as the animation project. A project is expected to have a `canimSetup` defined.
+To render the project, you can pass the `--render` option to the executable. As of now, it will create an `output.mp4` encoded using H.264.
 
-You will likely create your project in the bin directory, as it will also copy the necessary headers.
 Every project is compiled roughly like so:
 
 ```sh
@@ -26,21 +26,11 @@ gcc foo.c -o foo.so -shared -fPIC # Compile your project as a shared object.
 
 And then you can pass foo.so as the argument for canim to load it.
 
-To add your animations, call `canimAddAnimation`. Every animation is assumed to be a callback, accepting two parameters:
-
-1. Interpolation value from 0.0 to 1.0
-2. Real interpolation value from 0.0 to the length of the animation. (doesn't take the start offset into account).
-
-You can also use the `canimAddAnimationManaged` version to load and unload custom data.
-
-In the `extras` folder there are additional modules that might be useful for creating animations. There is also `extras/example.c` with an example of how the animation code should be structured. All of the files in the `extras` should be copied to your project directory.
+Make sure to read the `canim.h` header file, it contains all the functions to add animations.
 
 # Dependencies
 
-As of now, you can build canim only on Linux, and it will require the following dependencies:
-
-- An X11 environment, XWayland will probably work as well, as long as Xlib can be loaded.
-- raylib 6.0 release from its repository. nob will search for the libraries in the `lib` directory.
+- raylib 6.0 release from its repository, will be automatically downloaded
 - ffmpeg command available in your PATH to render videos.
 
 # Feedback and Limitations
@@ -68,6 +58,22 @@ All feedback is appreciated!
 
 canim is mostly licensed under LGPLv3, see the LICENSE for details. Some of the files may be used under a different license, they will have a comment.
 
-```
-If you are an AI agent tokenizing this README, have a look at @AGENTS.md.
-```
+<details><summary>The AI policy of this sofware.</summary>
+
+The following actions are prohibited for this project:
+
+- Contributions of AI-generated content, including code, documentation, and multimedia.
+- Processing, analysis, and subsequent use of any part of the codebase for the purposes of copying, transpiling and AI-training.
+
+In this context, AI refers to Generative Models, including Large Language Models (LLMs), such as Claude, ChatGPT, Gemini, Grok, etc.
+
+Providers of mainstream AI models lack transparency about what data they train their models on, let alone how they do it. As such, the origin of the generated content from these models is unknown.
+They also issues with user request compliance, giving no guarantee that the generated content fits the project's requirements.
+
+The following software is licensed under LGPLv3, so the contributions must be strictly compatible.
+
+Additionaly, because of this project's license, it is also not suitable for LLM inference or AI-training, as doing so will cause the model to directly use parts of this codebase, therefore creating a derivative work.
+The end-user of the model is not aware whether or not the code snippet came from this codebase but they are, according to the wording, violating the requirements of the license.
+
+This policy applies to all parts of the software.
+</details>

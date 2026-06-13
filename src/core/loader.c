@@ -103,7 +103,6 @@ void canimSetRenderWidth(double width)   { loader_state.width = width; }
 void canimSetRenderHeight(double height) { loader_state.height = height; }
 void canimSetRenderFPS(double fps)       { loader_state.fps = fps; }
 
-void canimAddAnimation(double start, double end, void(*callback)(double, double)) { canimTimelineAddEntry(loader_state.timeline, start, end, callback, 0, 0); }
-void canimAddAnimationManaged(double start, double end, void (*callback)(double progress, double actual), void (*init)(void), void (*deinit)(void)) { canimTimelineAddEntry(loader_state.timeline, start, end, callback, init, deinit); }
+void canimAddAnimation(CanimAnimation* animation) { canimTimelineAddEntry(loader_state.timeline, animation); }
 void canimSetTotalLength(double seconds) { canimTimelineSetLength(loader_state.timeline, seconds); }
 double canimGetTotalLength(void) { return canimTimelineGetLength(loader_state.timeline); }

@@ -27,7 +27,7 @@
 
 typedef struct RenderTextureMSAA {
     RenderTexture render;
-    Texture2D blit;
+    Texture2D blit, blit_depth;
     unsigned blit_fbo;
 } RenderTextureMSAA;
 

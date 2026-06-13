@@ -1,10 +1,9 @@
 #ifndef CANIM_TIMELINE_H
 #define CANIM_TIMELINE_H
 
-typedef struct CanimTimeline CanimTimeline;
+#include "canim.h"
 
-typedef void (*canim_callback_t)(double progress, double actual_time);
-typedef void (*canim_init_t)(void);
+typedef struct CanimTimeline CanimTimeline;
 
 CanimTimeline* canimTimelineCreate(int pagination_sec);
 void canimTimelineDestroy(CanimTimeline* timeline);
@@ -14,6 +13,6 @@ double canimTimelineGetLength(CanimTimeline *timeline);
 void canimTimelineComputeLength(CanimTimeline *timeline);
 
 char canimTimelineIterate(CanimTimeline *timeline, double seconds);
-void canimTimelineAddEntry(CanimTimeline *timeline, double start, double end, canim_callback_t callback, canim_init_t birth, canim_init_t death);
+void canimTimelineAddEntry(CanimTimeline *timeline, CanimAnimation *callback);
 
 #endif

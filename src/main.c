@@ -35,7 +35,7 @@ void drawError(const char* error)
 
 bool init(CanimArgs *args, CanimTimeline **timeline, CanimRender **renderer)
 {
-    unsigned width, height, fps, samples;
+    unsigned width, height, fps;
     *timeline = canimTimelineCreate(PAGINATION_SECONDS);
 
     TraceLog(LOG_INFO, "Opening file: %s", args->path);
@@ -55,7 +55,7 @@ bool init(CanimArgs *args, CanimTimeline **timeline, CanimRender **renderer)
     canimRenderInit();
 
     printf("Parsed args: %s, %d\n", args->path, args->render);
-    samples = 8;
+    unsigned samples = 8, depth_samples = 8;
     *renderer = canimRenderStart(width, height, fps, samples, args->render);
     return true;
 }

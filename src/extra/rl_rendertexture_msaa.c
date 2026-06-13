@@ -8,6 +8,7 @@
 
 enum { GL_READ_FRAMEBUFFER = 0x8CA8, GL_DRAW_FRAMEBUFFER = 0x8CA9, GL_COLOR_BUFFER_BIT = 0x00004000, GL_NEAREST = 0x2600,
        GL_TEXTURE_2D = 0x0DE1, GL_TEXTURE_2D_MULTISAMPLE = 0x9100,
+       GL_RENDERBUFFER = 0x8D41, GL_DEPTH_COMPONENT = 0x1902, GL_DEPTH_ATTACHMENT = 0x8D00,
        GL_RGBA = 0x1908, GL_RGBA8 = 0x8058, GL_RGB8 = 0x805,
        GL_FRAMEBUFFER = 0x8D40, GL_COLOR_ATTACHMENT0 = 0x8CE0,
        GL_UNPACK_ALIGNMENT = 0x0CF5, GL_PACK_ALIGNMENT = 0x0D05, GL_UNSIGNED_BYTE = 0x1401 };
@@ -15,6 +16,7 @@ enum { GL_READ_FRAMEBUFFER = 0x8CA8, GL_DRAW_FRAMEBUFFER = 0x8CA9, GL_COLOR_BUFF
 typedef void (*bindFramebufferPFN)(uint32_t, uint32_t);
 typedef void (*blitFramebufferPFN)(int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, uint32_t, uint32_t);
 typedef void (*framebufferTexture2DPFN)(uint32_t, uint32_t, uint32_t, uint32_t, int32_t);
+typedef void (*framebufferRenderbufferPFN)(uint32_t, uint32_t, uint32_t, uint32_t);
 
 typedef void (*genTexturesPFN)(int32_t, uint32_t*);
 typedef void (*bindTexturePFN)(uint32_t, uint32_t);
@@ -24,15 +26,21 @@ typedef void (*pixelStoreiPFN)(uint32_t, int32_t);
 typedef void (*readPixelsPFN)(int32_t, int32_t, int32_t, int32_t, uint32_t, uint32_t, void*);
 typedef void (*getTexImagePFN)(uint32_t, int32_t, uint32_t, uint32_t, void*);
 
+//typedef void (*genRenderbuffersPFN)(int32_t, uint32_t*);
+//typedef void (*bindRenderbufferPFN)(uint32_t, uint32_t*);
+typedef void (*renderbufferStorageMultisamplePFN)(uint32_t, int32_t, uint32_t, int32_t, int32_t);
+
 static struct {
     bindFramebufferPFN bindFramebuffer;
     blitFramebufferPFN blitFramebuffer;
     framebufferTexture2DPFN framebufferTexture2D;
+    framebufferRenderbufferPFN framebufferRenderbuffer;
 
-    genTexturesPFN genTextures;
-    bindTexturePFN bindTexture;
+    genTexturesPFN genTextures, genRenderbuffers;
+    bindTexturePFN bindTexture, bindRenderbuffer;
     texImage2DPFN texImage2D;
     texStorage2DMultisamplePFN texStorage2DMultisample;
+    renderbufferStorageMultisamplePFN renderbufferStorageMultisample;
 
     pixelStoreiPFN pixelStorei;
     readPixelsPFN readPixels;
@@ -43,15 +51,20 @@ static struct {
 
 void InitMSAAInjector(void)
 {
-    gl.bindFramebuffer       = (bindFramebufferPFN)GL_PROC_ADDRESS("glBindFramebuffer");
-    gl.blitFramebuffer       = (blitFramebufferPFN)GL_PROC_ADDRESS("glBlitFramebuffer");
-    gl.framebufferTexture2D  = (framebufferTexture2DPFN)GL_PROC_ADDRESS("glFramebufferTexture2D");
+    gl.bindFramebuffer         = (bindFramebufferPFN)GL_PROC_ADDRESS("glBindFramebuffer");
+    gl.blitFramebuffer         = (blitFramebufferPFN)GL_PROC_ADDRESS("glBlitFramebuffer");
+    gl.framebufferTexture2D    = (framebufferTexture2DPFN)GL_PROC_ADDRESS("glFramebufferTexture2D");
+    gl.framebufferRenderbuffer = (framebufferRenderbufferPFN)GL_PROC_ADDRESS("glFramebufferRenderbuffer");
 
     gl.genTextures           = (genTexturesPFN)GL_PROC_ADDRESS("glGenTextures");
     gl.bindTexture           = (bindTexturePFN)GL_PROC_ADDRESS("glBindTexture");
     gl.texImage2D            = (texImage2DPFN)GL_PROC_ADDRESS("glTexImage2D");
 
+    gl.genRenderbuffers      = (genTexturesPFN)GL_PROC_ADDRESS("glGenRenderbuffers");
+    gl.bindRenderbuffer      = (bindTexturePFN)GL_PROC_ADDRESS("glBindRenderbuffer");
+
     gl.texStorage2DMultisample = (texStorage2DMultisamplePFN)GL_PROC_ADDRESS("glTexStorage2DMultisample");
+    gl.renderbufferStorageMultisample = (renderbufferStorageMultisamplePFN)GL_PROC_ADDRESS("glRenderbufferStorageMultisample");
 
     if(!gl.texStorage2DMultisample) // Fallback to glTexImage2DMultisample
         gl.texStorage2DMultisample = (texStorage2DMultisamplePFN)GL_PROC_ADDRESS("glTexImage2DMultisample");
@@ -73,28 +86,41 @@ RenderTextureMSAA LoadRenderTextureMSAA(unsigned width, unsigned height, unsigne
         return TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created"), target;
 
     Texture2D texture = {.width = width, .height = height, .format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, .mipmaps = 1};
+    Texture2D depth_texture = {.width = width, .height = height, .mipmaps = 1};
+
     gl.pixelStorei(GL_UNPACK_ALIGNMENT, 1);
     gl.genTextures(1, &texture.id);
     gl.bindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture.id);
     gl.texStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA8, width, height, 1);
     gl.bindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
+    gl.genRenderbuffers(1, &depth_texture.id);
+    gl.bindRenderbuffer(GL_RENDERBUFFER, depth_texture.id);
+    gl.renderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT, width, height);
+
+    gl.bindRenderbuffer(GL_RENDERBUFFER, 0);
+
     target.blit.id = rlLoadTexture(0, width, height, RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
-    target.blit.width = width;
-    target.blit.height = height;
+    target.blit_depth.id = rlLoadTextureDepth(width, height, true);
+
+    target.blit_depth.width = target.blit.width = width;
+    target.blit_depth.height = target.blit.height = height;
+    target.blit_depth.mipmaps = target.blit.mipmaps = 1;
     target.blit.format = RL_PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-    target.blit.mipmaps = 1;
+    target.blit_depth.format = 19;
 
     target.render.texture = texture;
+    target.render.depth = depth_texture;
 
     gl.bindFramebuffer(GL_FRAMEBUFFER, target.render.id);
 
     gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, texture.id, 0);
-    // TODO: add MSAA depth render buffer
+    gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_texture.id);
 
     gl.bindFramebuffer(GL_FRAMEBUFFER, target.blit_fbo);
 
     gl.framebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target.blit.id, 0);
+    gl.framebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, target.blit_depth.id);
 
     gl.bindFramebuffer(GL_FRAMEBUFFER, 0);
 

@@ -1,17 +1,18 @@
 #include "./timeline.h"
 
+#include "canim.h"
 #include "raylib/raylib.h"
 #include "altarr.h"
 
-struct Entry {
-    canim_callback_t callback;
-    canim_init_t birth, death;
-    float start, end;
-};
-altarr_typedef(struct Entry, Entry);
+typedef struct Entry {
+    CanimAnimation animation;
+    CanimAnimationFrame frame;
+} Entry;
 
-struct Page { altarr_t(Entry) entries; };
-altarr_typedef(struct Page, Page);
+altarr_typedef(Entry);
+
+typedef struct Page { altarr_t(Entry) entries; } Page;
+altarr_typedef(Page);
 
 struct CanimTimeline {
     altarr_t(Page) pages;
@@ -42,9 +43,11 @@ void canimTimelineDestroy(CanimTimeline *timeline)
     if(!timeline) return;
 
     for(int i = timeline->last_page > 0 ? timeline->last_page : 0; i < altarrLength(timeline->pages); ++i) {
-        struct Page *page = &altarrAt(timeline->pages, i);
-        for(int j = 0; j < altarrLength(page->entries); ++j)
-            altarrAt(page->entries, j).death ? altarrAt(page->entries, j).death() : 0;
+        Page *page = &altarrAt(timeline->pages, i);
+        for(int j = 0; j < altarrLength(page->entries); ++j) {
+            struct Entry *entry = &altarrAt(page->entries, j);
+            entry->animation.deinit ? entry->animation.deinit(entry->frame.data) : 0;
+        }
     }
 
     for(int i = 0; i < altarrLength(timeline->pages); ++i)
@@ -68,14 +71,19 @@ char canimTimelineIterate(CanimTimeline *timeline, double seconds)
     struct Page *current = &altarrAt(timeline->pages, page_id);
 
     if(page_id > timeline->last_page) {
-        for(int i = 0; i < altarrLength(current->entries); ++i)
-            altarrAt(current->entries, i).birth ? altarrAt(current->entries, i).birth() : 0;
+        for(int i = 0; i < altarrLength(current->entries); ++i) {
+            Entry *entry = &altarrAt(current->entries, i);
+            if(entry->animation.init)
+            entry->frame.data = entry->animation.init();
+        }
 
         if(timeline->last_page >= 0) {
             struct Page *last = &altarrAt(timeline->pages, timeline->last_page);
 
-            for(int i = 0; i < altarrLength(last->entries); ++i)
-                altarrAt(last->entries, i).death ? altarrAt(last->entries, i).death() : 0;
+            for(int j = 0; j < altarrLength(last->entries); ++j) {
+                struct Entry *entry = &altarrAt(last->entries, j);
+                entry->animation.deinit ? entry->animation.deinit(entry->frame.data) : 0;
+            }
         }
 
         timeline->last_page = page_id;
@@ -83,25 +91,25 @@ char canimTimelineIterate(CanimTimeline *timeline, double seconds)
 
     for(int i = 0; i < altarrLength(current->entries); ++i) {
         struct Entry *entry = &altarrAt(current->entries, i);
-        if(seconds < entry->start || seconds > entry->end)
+        if(seconds < entry->animation.start || seconds > (entry->animation.start + entry->animation.duration))
             continue;
 
-        entry->callback((seconds - entry->start) / entry->end, seconds - entry->start);
+        entry->frame.progress = (seconds - entry->animation.start) / entry->animation.duration;
+        entry->frame.global_progress = seconds - entry->animation.start;
+
+        entry->animation.callback(&entry->frame);
     }
 
     return 1;
 }
 
-void canimTimelineAddEntry(CanimTimeline *timeline, double start, double end, canim_callback_t callback, canim_init_t birth, canim_init_t death)
+void canimTimelineAddEntry(CanimTimeline *timeline, CanimAnimation *callback)
 {
     assert(timeline->pagination > 0);
 
-    if(start > end)
-        return;
-
-    struct Entry entry = {.start = start, .end = end, .callback = callback, .birth = birth, .death = death};
-    unsigned page_start = (unsigned)start / timeline->pagination;
-    unsigned page_end = (unsigned)end / timeline->pagination;
+    Entry entry = { *callback, {.animation_length = callback->duration} };
+    unsigned page_start = (unsigned)callback->start / timeline->pagination;
+    unsigned page_end = (unsigned)(callback->start + callback->duration) / timeline->pagination;
 
     if(page_end >= altarrLength(timeline->pages)) {
         size_t old_length = altarrLength(timeline->pages);
@@ -115,14 +123,15 @@ void canimTimelineAddEntry(CanimTimeline *timeline, double start, double end, ca
         return;
     }
 
-    entry.death = 0;
+    Entry clone = entry;
+    clone.animation.deinit = 0;
     altarrPush(altarrAt(timeline->pages, page_start).entries, entry);
 
-    entry.birth = 0;
+    clone.animation.init = 0;
     for(int i = page_start + 1; i < page_end; ++i)
         altarrPush(altarrAt(timeline->pages, i).entries, entry);
 
-    entry.death = death;
+    entry.animation.deinit = clone.animation.deinit;
     altarrPush(altarrAt(timeline->pages, page_end).entries, entry);
 }
 
@@ -135,7 +144,8 @@ void canimTimelineComputeLength(CanimTimeline *timeline)
     struct Page *last_page = &altarrAt(timeline->pages, altarrLength(timeline->pages) - 1);
 
     for(int i = 0; i < altarrLength(last_page->entries); ++i) {
-        double this_length = altarrAt(last_page->entries, i).end;
+        Entry entry = altarrAt(last_page->entries, i);
+        double this_length = entry.animation.start + entry.animation.duration;
         max_length = this_length > max_length ? this_length : max_length;
     }
 
