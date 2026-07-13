@@ -60,7 +60,7 @@ ifneq (,$(raylib_config))
 	@${MAKE} --no-print-directory -C lib/raylib-master -f Makefile config=$(raylib_config)
 endif
 
-canim:
+canim: raylib
 ifneq (,$(canim_config))
 	@echo "==== Building canim ($(canim_config)) ===="
 	@${MAKE} --no-print-directory -C . -f canim.make config=$(canim_config)

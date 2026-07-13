@@ -32,8 +32,6 @@ INCLUDES += -Iinclude
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-LIBS += -lm -lX11
-LDDEPS +=
 LINKCMD = $(CC) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
 define PREBUILDCMDS
 endef
@@ -47,12 +45,13 @@ OBJDIR = bin/debug/.build/obj/x64/debug/canim
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -Wl,--whole-archive bin/debug/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/debug/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/debug/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/debug/include"
-	cp -rf include/raylib "bin/debug/include/"
-	cp -f include/canim.h "bin/debug/include/canim.h"
+	cp -f src/core/canim.h "bin/debug/include/canim.h"
 endef
 
 else ifeq ($(config),debug_x86)
@@ -62,12 +61,13 @@ OBJDIR = bin/debug/.build/obj/x86/debug/canim
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m32 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m32 -g
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -Wl,--whole-archive bin/debug/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/debug/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/debug/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/debug/include"
-	cp -rf include/raylib "bin/debug/include/"
-	cp -f include/canim.h "bin/debug/include/canim.h"
+	cp -f src/core/canim.h "bin/debug/include/canim.h"
 endef
 
 else ifeq ($(config),debug_arm64)
@@ -77,12 +77,13 @@ OBJDIR = bin/debug/.build/obj/ARM64/debug/canim
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -g
-ALL_LDFLAGS += $(LDFLAGS) -Wl,--whole-archive bin/debug/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/debug/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/debug/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS)
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/debug/include"
-	cp -rf include/raylib "bin/debug/include/"
-	cp -f include/canim.h "bin/debug/include/canim.h"
+	cp -f src/core/canim.h "bin/debug/include/canim.h"
 endef
 
 else ifeq ($(config),sanitize_x64)
@@ -92,12 +93,13 @@ OBJDIR = bin/sanitize/.build/obj/x64/sanitize/canim
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -fsanitize=address -fsanitize=undefined -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -fsanitize=address -fsanitize=undefined -g
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -fsanitize=address -fsanitize=undefined -Wl,--whole-archive bin/sanitize/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/sanitize/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/sanitize/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -fsanitize=address -fsanitize=undefined
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/sanitize/include"
-	cp -rf include/raylib "bin/sanitize/include/"
-	cp -f include/canim.h "bin/sanitize/include/canim.h"
+	cp -f src/core/canim.h "bin/sanitize/include/canim.h"
 endef
 
 else ifeq ($(config),sanitize_x86)
@@ -107,12 +109,13 @@ OBJDIR = bin/sanitize/.build/obj/x86/sanitize/canim
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m32 -fsanitize=address -fsanitize=undefined -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m32 -fsanitize=address -fsanitize=undefined -g
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -fsanitize=address -fsanitize=undefined -Wl,--whole-archive bin/sanitize/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/sanitize/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/sanitize/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -fsanitize=address -fsanitize=undefined
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/sanitize/include"
-	cp -rf include/raylib "bin/sanitize/include/"
-	cp -f include/canim.h "bin/sanitize/include/canim.h"
+	cp -f src/core/canim.h "bin/sanitize/include/canim.h"
 endef
 
 else ifeq ($(config),sanitize_arm64)
@@ -122,12 +125,13 @@ OBJDIR = bin/sanitize/.build/obj/ARM64/sanitize/canim
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -fsanitize=address -fsanitize=undefined -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -fsanitize=address -fsanitize=undefined -g
-ALL_LDFLAGS += $(LDFLAGS) -fsanitize=address -fsanitize=undefined -Wl,--whole-archive bin/sanitize/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/sanitize/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/sanitize/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -fsanitize=address -fsanitize=undefined
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/sanitize/include"
-	cp -rf include/raylib "bin/sanitize/include/"
-	cp -f include/canim.h "bin/sanitize/include/canim.h"
+	cp -f src/core/canim.h "bin/sanitize/include/canim.h"
 endef
 
 else ifeq ($(config),release_x64)
@@ -137,12 +141,13 @@ OBJDIR = bin/release/.build/obj/x64/release/canim
 DEFINES += -DNDEBUG -DALTARR_NO_DIAGNOSTICS
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s -Wl,--whole-archive bin/release/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/release/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/release/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/release/include"
-	cp -rf include/raylib "bin/release/include/"
-	cp -f include/canim.h "bin/release/include/canim.h"
+	cp -f src/core/canim.h "bin/release/include/canim.h"
 endef
 
 else ifeq ($(config),release_x86)
@@ -152,12 +157,13 @@ OBJDIR = bin/release/.build/obj/x86/release/canim
 DEFINES += -DNDEBUG -DALTARR_NO_DIAGNOSTICS
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m32 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m32 -O2
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -s -Wl,--whole-archive bin/release/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/release/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/release/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib32 -m32 -s
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/release/include"
-	cp -rf include/raylib "bin/release/include/"
-	cp -f include/canim.h "bin/release/include/canim.h"
+	cp -f src/core/canim.h "bin/release/include/canim.h"
 endef
 
 else ifeq ($(config),release_arm64)
@@ -167,12 +173,13 @@ OBJDIR = bin/release/.build/obj/ARM64/release/canim
 DEFINES += -DNDEBUG -DALTARR_NO_DIAGNOSTICS
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -O2
-ALL_LDFLAGS += $(LDFLAGS) -s -Wl,--whole-archive bin/release/.build/lib/libraylib.a -Wl,--no-whole-archive -rdynamic
+LIBS += bin/release/.build/lib/libraylib.a -lm -lX11
+LDDEPS += bin/release/.build/lib/libraylib.a
+ALL_LDFLAGS += $(LDFLAGS) -s
 define POSTBUILDCMDS
 	@echo Running postbuild commands
 	mkdir -p "bin/release/include"
-	cp -rf include/raylib "bin/release/include/"
-	cp -f include/canim.h "bin/release/include/canim.h"
+	cp -f src/core/canim.h "bin/release/include/canim.h"
 endef
 
 endif
@@ -187,15 +194,15 @@ endif
 GENERATED :=
 OBJECTS :=
 
-GENERATED += $(OBJDIR)/loader.o
 GENERATED += $(OBJDIR)/main.o
 GENERATED += $(OBJDIR)/render.o
 GENERATED += $(OBJDIR)/rl_rendertexture_msaa.o
+GENERATED += $(OBJDIR)/so_loader.o
 GENERATED += $(OBJDIR)/timeline.o
-OBJECTS += $(OBJDIR)/loader.o
 OBJECTS += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/render.o
 OBJECTS += $(OBJDIR)/rl_rendertexture_msaa.o
+OBJECTS += $(OBJDIR)/so_loader.o
 OBJECTS += $(OBJDIR)/timeline.o
 
 # Rules
@@ -260,10 +267,10 @@ endif
 # File Rules
 # #############################################
 
-$(OBJDIR)/loader.o: src/core/loader.c
+$(OBJDIR)/render.o: src/core/render.c
 	@echo "$(notdir $<)"
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/render.o: src/core/render.c
+$(OBJDIR)/so_loader.o: src/core/so_loader.c
 	@echo "$(notdir $<)"
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/timeline.o: src/core/timeline.c

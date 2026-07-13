@@ -187,14 +187,12 @@ project "canim"
     includedirs {"include/"}
 
     filter "toolset:gcc or toolset:clang"
-        linkoptions { "-Wl,--whole-archive", raylib_target .. "/libraylib.a", "-Wl,--no-whole-archive", "-rdynamic" }
-        links { "m" }
+        links { "m", "raylib" }
 
     filter {"options:wayland=off"}
         links { "X11" }
 
     postbuildcommands {
         "{MKDIR} %[bin/%{cfg.buildcfg}/include]",
-        "{COPYDIR} include/raylib %[bin/%{cfg.buildcfg}/include/]",
-        "{COPYFILE} include/canim.h %[bin/%{cfg.buildcfg}/include/canim.h]"
+        "{COPYFILE} src/core/canim.h %[bin/%{cfg.buildcfg}/include/canim.h]"
     }

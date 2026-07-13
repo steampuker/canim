@@ -12,6 +12,9 @@ void canimTimelineSetLength(CanimTimeline *timeline, double length);
 double canimTimelineGetLength(CanimTimeline *timeline);
 void canimTimelineComputeLength(CanimTimeline *timeline);
 
+void canimTimelineSetIterationCallback(CanimTimeline *timeline, void (*iteration_callback)(void));
+void* canimTimelineGetState(CanimTimeline *timeline);
+
 char canimTimelineIterate(CanimTimeline *timeline, double seconds);
 void canimTimelineAddEntry(CanimTimeline *timeline, CanimAnimation *callback);
 

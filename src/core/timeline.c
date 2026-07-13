@@ -1,12 +1,11 @@
 #include "./timeline.h"
 
 #include "canim.h"
-#include "raylib/raylib.h"
 #include "altarr.h"
 
 typedef struct Entry {
     CanimAnimation animation;
-    CanimAnimationFrame frame;
+    struct CanimFrameContents frame;
 } Entry;
 
 altarr_typedef(Entry);
@@ -20,6 +19,7 @@ struct CanimTimeline {
     unsigned pagination;
 
     int last_page;
+    void (*iteration_callback)(void);
 };
 
 void canimTimelineSetLength(CanimTimeline *timeline, double length) { timeline->length = length; }
@@ -27,11 +27,11 @@ double canimTimelineGetLength(CanimTimeline *timeline) { return timeline->length
 
 CanimTimeline* canimTimelineCreate(int pagination_sec)
 {
-    CanimTimeline* timeline = MemAlloc(sizeof *timeline);
+    CanimTimeline* timeline = malloc(sizeof *timeline);
     if(!timeline) return NULL;
 
     timeline->pages = altarrCreate(Page);
-    if(!altarrValid(timeline->pages)) return MemFree(timeline), NULL;
+    if(!altarrValid(timeline->pages)) return free(timeline), NULL;
 
     timeline->pagination = pagination_sec;
     timeline->last_page = -1;
@@ -55,7 +55,7 @@ void canimTimelineDestroy(CanimTimeline *timeline)
 
     altarrDestroy(timeline->pages);
 
-    MemFree(timeline);
+    free(timeline);
 }
 
 char canimTimelineIterate(CanimTimeline *timeline, double seconds)
@@ -98,6 +98,9 @@ char canimTimelineIterate(CanimTimeline *timeline, double seconds)
         entry->frame.global_progress = seconds - entry->animation.start;
 
         entry->animation.callback(&entry->frame);
+
+        if(timeline->iteration_callback)
+            timeline->iteration_callback();
     }
 
     return 1;
@@ -150,4 +153,8 @@ void canimTimelineComputeLength(CanimTimeline *timeline)
     }
 
     timeline->length = max_length;
+}
+
+void canimTimelineSetIterationCallback(CanimTimeline *timeline, void (*iteration_callback)(void)) {
+    timeline->iteration_callback = iteration_callback;
 }

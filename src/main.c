@@ -1,4 +1,4 @@
-#include "./core/loader.h"
+#include "./core/so_loader.h"
 #include "./core/render.h"
 #include "./core/timeline.h"
 
@@ -94,20 +94,21 @@ int main(int argc, char** argv)
 
         canimRenderEndOutput(rend);
 
+        BeginDrawing();
+        ClearBackground(BLACK);
+
         if(!parsed_args.render) {
-            BeginDrawing();
-            ClearBackground(BLACK);
             canimRenderDraw(rend, 0, 0, GetScreenWidth(), GetScreenHeight());
-            DrawText(TextFormat("Total Time: %f, started with %f", getPreviewTime(), GetTime()), 0, 30, 24, WHITE);
+            DrawText(TextFormat("Total Time: %f, started with %f", getPreviewTime(), GetTime()), 0, GetScreenHeight() - 24, 24, (Color){255, 255, 255, 128});
             DrawFPS(0, 0);
-            EndDrawing();
         } else {
             const Vector2 text_size = {(GetScreenWidth() - MeasureText("Rendering", 48)) / 2., GetScreenHeight() / 2.};
             BeginDrawing();
             ClearBackground(BLACK);
             DrawText("Rendering...", text_size.x, text_size.y, 48, WHITE);
-            EndDrawing();
         }
+
+        EndDrawing();
 
         canimRenderSendFrame(rend);
     }
