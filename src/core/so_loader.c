@@ -13,6 +13,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
 
 #define INTERNAL static inline
 
@@ -105,6 +106,7 @@ void canimLoaderParseArgs(int argc, char** argv, CanimArgs *result)
 }
 
 #include "raylib/raylib.h"
+#include "raylib/rlgl.h"
 
 struct CanimTexture { Texture t; };
 #define AS_CAMERA2D(c) (Camera2D){.offset = {(c).offset.x, (c).offset.y}, .target = {(c).target.x, (c).target.y}, .zoom = (c).zoom, .rotation = (c).rotation}
@@ -129,13 +131,42 @@ INTERNAL void unloadTexture(CanimTexture texture) {
     free(texture);
 }
 
-INTERNAL void drawRect(CanimRect rect, CanimVec2 position, float rotation, CanimColor color) { DrawRectanglePro(AS_RECTANGLE(rect), AS_VECTOR2(position), rotation, AS_COLOR(color)); }
+INTERNAL void drawRect(CanimRect rect, CanimVec2 position, CanimVec2 pivot_offset, float rotation, CanimColor color) {
+    DrawRectanglePro((Rectangle){rect.x + pivot_offset.x + position.x, rect.y + pivot_offset.y + position.y, rect.w, rect.h},
+                     AS_VECTOR2(pivot_offset), rotation, AS_COLOR(color));
+}
+
 INTERNAL void drawLine(CanimVec2 start, CanimVec2 end, float thickness, CanimColor fill_color) { DrawLineEx(AS_VECTOR2(start), AS_VECTOR2(end), thickness, AS_COLOR(fill_color)); }
 INTERNAL void drawCircle(CanimVec2 position, float radius, CanimColor fill_color) { DrawCircleV(AS_VECTOR2(position), radius, AS_COLOR(fill_color)); }
 
+INTERNAL void drawRectOutline(CanimRect rect, CanimVec2 position, CanimVec2 pivot_offset, float rotation, float thickness, CanimColor fill_color) {
+    CanimVec2 corners[4] = {{0}, {rect.w}, {rect.w, rect.h}, {0,rect.h}};
+    Vector2 rotated[4] = {{position.x, position.y}, {position.x, position.y}, {position.x, position.y}, {position.x, position.y}};
+
+    if(rotation != 0.0) for(int i = 0; i < 4; ++i) {
+        rotated[i].x += (corners[i].x - pivot_offset.x) * cos(rotation * DEG2RAD) - (corners[i].y - pivot_offset.y) * sin(rotation * DEG2RAD) + rect.x + pivot_offset.x;
+        rotated[i].y += (corners[i].x - pivot_offset.x) * sin(rotation * DEG2RAD) + (corners[i].y - pivot_offset.y) * cos(rotation * DEG2RAD) + rect.y + pivot_offset.y;
+    }
+    else for(int i = 0; i < 4; ++i) {
+        rotated[i].x += corners[i].x + rect.x;
+        rotated[i].y += corners[i].y + rect.y;
+    }
+
+    DrawLineEx(rotated[0], rotated[1], thickness, AS_COLOR(fill_color));
+    DrawLineEx(rotated[1], rotated[2], thickness, AS_COLOR(fill_color));
+    DrawLineEx(rotated[2], rotated[3], thickness, AS_COLOR(fill_color));
+    DrawLineEx(rotated[3], rotated[0], thickness, AS_COLOR(fill_color));
+}
+
+INTERNAL void drawCircleOutline(CanimVec2 position, float radius, float thickness, CanimColor fill_color) {
+    DrawRing(AS_VECTOR2(position), radius - thickness * 0.5, radius + thickness * 0.5, 0, 360, 64, AS_COLOR(fill_color));
+}
+
 INTERNAL void drawTexture(CanimTexture t, CanimVec2 pos, CanimColor color) { DrawTextureV(t->t, AS_VECTOR2(pos), AS_COLOR(color)); }
 INTERNAL void drawTextureSlice(CanimTexture t, const CanimTextureSlice* slice, CanimVec2 pos, CanimColor color) {
-    DrawTexturePro(t->t, AS_RECTANGLE(slice->source), (Rectangle){pos.x, pos.y, slice->destination.w, slice->destination.h}, (Vector2){slice->destination.x + slice->offset.x, slice->destination.y + slice->offset.y}, slice->rotation, AS_COLOR(color));
+    DrawTexturePro(t->t, AS_RECTANGLE(slice->source),
+                         (Rectangle){slice->destination.x + slice->pivot_offset.x + pos.x, slice->destination.y + slice->pivot_offset.y + pos.y, slice->destination.w, slice->destination.h},
+                         AS_VECTOR2(slice->pivot_offset), slice->rotation, AS_COLOR(color));
 }
 
 INTERNAL void addAnimation(CanimAnimation *animation) { canimTimelineAddEntry(loader_state.timeline, animation); }
@@ -182,6 +213,9 @@ INTERNAL CanimSetupInfo *getSetupInfo(void)
         .drawLine = drawLine,
         .drawRect = drawRect,
         .drawCircle = drawCircle,
+
+        .drawRectOutline = drawRectOutline,
+        .drawCircleOutline = drawCircleOutline
     };
 
     return (CanimSetupInfo*)&info;

@@ -64,7 +64,7 @@ typedef struct CanimCamera2D {
 typedef struct CanimTexture* CanimTexture;
 typedef struct CanimTextureSlice {
     CanimRect source, destination;
-    CanimVec2 offset;
+    CanimVec2 pivot_offset;
     float rotation;
 } CanimTextureSlice;
 
@@ -87,8 +87,10 @@ struct CanimSetupInfo {
     void (*drawTextureSlice)(const CanimTexture, const CanimTextureSlice* slice, CanimVec2 position, CanimColor fill_color);
 
     void (*drawLine)(CanimVec2 start, CanimVec2 end, float thickness, CanimColor fill_color);
-    void (*drawRect)(CanimRect rect, CanimVec2 position, float rotation, CanimColor fill_color);
+    void (*drawRect)(CanimRect rect, CanimVec2 position, CanimVec2 pivot_offset, float rotation, CanimColor fill_color);
     void (*drawCircle)(CanimVec2 position, float radius, CanimColor fill_color);
+    void (*drawRectOutline)(CanimRect rect, CanimVec2 position, CanimVec2 pivot_offset, float rotation, float thickness, CanimColor fill_color);
+    void (*drawCircleOutline)(CanimVec2 position, float radius, float thickness, CanimColor fill_color);
 };
 
 static const CanimColor CANIM_WHITE = {255, 255, 255, 255};
