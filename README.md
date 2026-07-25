@@ -8,9 +8,9 @@ In its essence, it's very similar to [panim](https://github.com/tsoding/panim), 
 canim uses Premake5 to build itself, make sure to [download it](https://premake.github.io/download). Here's an example with GNU Make:
 
 ```
-    cd canim
-    premake5 gmake
-    make
+cd canim
+premake5 gmake
+make
 ```
 
 It will create a `bin/debug/` folder containing the canim binary and include files.
